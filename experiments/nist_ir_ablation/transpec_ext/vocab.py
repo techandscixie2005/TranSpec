@@ -1,0 +1,12 @@
+PAD_TOKEN = "<PAD>"
+BOS_TOKEN = "<BOS>"
+EOS_TOKEN = "<EOS>"
+UNK_TOKEN = "<UNK>"
+
+PAD_ID = 0
+BOS_ID = 1
+EOS_ID = 2
+UNK_ID = 3
+
+SPECIAL_TOKENS = {"<PAD>": 0, "<BOS>": 1, "<EOS>": 2, "<UNK>": 3}
+FIRST_REAL_TOKEN_ID = 4

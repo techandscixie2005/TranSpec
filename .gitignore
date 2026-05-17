@@ -1,0 +1,37 @@
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Environments
+.env
+.venv/
+venv/
+conda-meta/
+
+# Local data and runs
+data/
+runs/
+*.pt
+*.pth
+*.ckpt
+*.pkl
+
+# Logs
+*.log
+slurm_logs/
+*.out
+*.err
+
+# OS/editor
+.DS_Store
+.vscode/
+.idea/
+
+# Large data files
+IR_nist.jsonl
+
+# OMC / temporary state
+.omc/

@@ -1,0 +1,55 @@
+# Smoke test configuration (overrides nist_ir_base.yaml)
+
+experiment:
+  max_samples: 200
+  seeds: [42]
+  models: [E0_atom_nope, E1_atom_fourier, E2_spe_nope, E3_spe_fourier]
+
+model:
+  d_model: 64
+  nhead: 4
+  num_encoder_layers: 2
+  num_decoder_layers: 2
+  dim_feedforward: 256
+  dropout: 0.1
+
+fourier:
+  num_frequencies: 16
+
+training:
+  epochs: 2
+  batch_size: 8
+  lr: 2.0e-4
+  weight_decay: 1.0e-4
+  early_stopping_patience: 2
+  grad_clip: 1.0
+  amp: false
+  num_workers: 0
+  label_smoothing: 0.0
+
+decoding:
+  max_len: 256
+  threshold_value: 0.01
+  candidate_limit: 100
+
+tokenizer:
+  max_len: 256
+
+spe:
+  vocab_size: 100
+  min_frequency: 2
+
+spectrum:
+  target_len: 3000
+  x_min: 552.0
+  x_max: 3844.0
+  interpolation: cubic
+  fill_value: 0.0
+  clip_negative: true
+  normalize: max
+
+split:
+  train: 0.8
+  valid: 0.1
+  test: 0.1
+  split_seed: 1234

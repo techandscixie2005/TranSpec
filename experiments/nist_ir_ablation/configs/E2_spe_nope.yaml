@@ -1,0 +1,3 @@
+spectral_fourier_encoding: false
+tokenizer:
+  type: spe
