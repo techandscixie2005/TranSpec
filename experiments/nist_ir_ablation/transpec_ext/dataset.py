@@ -83,12 +83,13 @@ def ablation_collate_fn(batch: List[dict]) -> dict:
     }
 
 
-def load_split_dataset(processed_dir: str, split: str) -> NistIRAblationDataset:
+def load_split_dataset(processed_dir: str, split: str, target_dir: str = "atom") -> NistIRAblationDataset:
     """Load a train/valid/test split from processed data.
 
     Args:
         processed_dir: Root processed directory.
         split: One of "train", "valid", "test".
+        target_dir: Subdirectory with tokenized targets ("atom" or "spe").
 
     Returns:
         NistIRAblationDataset for the given split.
@@ -107,17 +108,22 @@ def load_split_dataset(processed_dir: str, split: str) -> NistIRAblationDataset:
 
     split_idx = split_data[split]  # list of indices into records
 
-    target_dir = "atom"  # default; callers can override via dataset_kwargs
-    # First try atom, then spe
-    atom_path = os.path.join(processed_dir, "atom", f"{split}.pt")
-    spe_path = os.path.join(processed_dir, "spe", f"{split}.pt")
-    if os.path.exists(atom_path):
-        target_ids_list = torch.load(atom_path, weights_only=False)
-    elif os.path.exists(spe_path):
-        target_ids_list = torch.load(spe_path, weights_only=False)
-        target_dir = "spe"
+    target_dir_name = target_dir  # use specified target_dir
+    target_path = os.path.join(processed_dir, target_dir_name, f"{split}.pt")
+    if os.path.exists(target_path):
+        target_ids_list = torch.load(target_path, weights_only=False)
     else:
-        raise FileNotFoundError(f"No tokenized data found for split '{split}'")
+        # Fallback: try the other directory
+        fallback = "spe" if target_dir_name == "atom" else "atom"
+        fallback_path = os.path.join(processed_dir, fallback, f"{split}.pt")
+        if os.path.exists(fallback_path):
+            target_ids_list = torch.load(fallback_path, weights_only=False)
+            target_dir_name = fallback
+        else:
+            raise FileNotFoundError(
+                f"No tokenized data found for split '{split}' in "
+                f"'{target_dir_name}' or '{fallback}'"
+            )
 
     # Map from global record index to local index
     record_to_position = {g: i for i, g in enumerate(split_idx)}

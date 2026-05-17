@@ -103,13 +103,19 @@ def parse_args():
         choices=["beam", "threshold"],
         help="Decoding method (default: beam)",
     )
+    parser.add_argument(
+        "--base_config", default=None,
+        help="Base YAML config path (default: smoke_200.yaml next to condition config)",
+    )
     return parser.parse_args()
 
 
 def load_configs(args):
-    """Load and merge condition config over base config (smoke_200.yaml)."""
-    config_dir = os.path.dirname(os.path.abspath(args.config))
-    base_path = os.path.join(config_dir, "smoke_200.yaml")
+    """Load and merge condition config over base config."""
+    base_path = args.base_config
+    if base_path is None:
+        config_dir = os.path.dirname(os.path.abspath(args.config))
+        base_path = os.path.join(config_dir, "smoke_200.yaml")
     if not os.path.exists(base_path):
         print(f"WARNING: Base config not found at {base_path}, using condition config only")
         with open(args.config) as f:
@@ -369,7 +375,8 @@ def main():
 
     # Load test dataset
     logger.info("Loading test dataset from %s ...", args.processed_dir)
-    test_dataset = load_split_dataset(args.processed_dir, "test")
+    target_dir = "spe" if tokenizer_type == "spe" else "atom"
+    test_dataset = load_split_dataset(args.processed_dir, "test", target_dir=target_dir)
     num_test = len(test_dataset)
     logger.info("Test samples: %d", num_test)
 

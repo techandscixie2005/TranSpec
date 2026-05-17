@@ -192,12 +192,10 @@ def test_evaluate_one_runs_and_creates_outputs(
         threshold_value = None
         candidate_limit = None
         beam_size = None
+        decode_method = None
+        base_config = None
 
-    # Load config
-    config = load_configs(MockArgs)
-    # Actually load_configs expects the path, not a MockArgs
-    # Let me do this differently and just call the functions directly
-
+    # Load config directly
     config = load_configs_internal(tiny_config)
     tokenizer = load_tokenizer(
         tiny_processed, config.get("tokenizer", {}).get("type", "atom")

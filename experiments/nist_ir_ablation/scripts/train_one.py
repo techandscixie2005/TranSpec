@@ -69,13 +69,19 @@ def parse_args():
     )
     parser.add_argument("--seed", type=int, default=42, help="Random seed")
     parser.add_argument("--epochs", type=int, default=None, help="Override epochs")
+    parser.add_argument(
+        "--base_config", default=None,
+        help="Base YAML config path (default: smoke_200.yaml next to condition config)",
+    )
     return parser.parse_args()
 
 
 def load_configs(args):
-    """Load and merge condition config over base config (smoke_200.yaml)."""
-    config_dir = os.path.dirname(os.path.abspath(args.config))
-    base_path = os.path.join(config_dir, "smoke_200.yaml")
+    """Load and merge condition config over base config."""
+    base_path = args.base_config
+    if base_path is None:
+        config_dir = os.path.dirname(os.path.abspath(args.config))
+        base_path = os.path.join(config_dir, "smoke_200.yaml")
     if not os.path.exists(base_path):
         print(f"ERROR: Base config not found at {base_path}")
         sys.exit(1)
@@ -178,10 +184,8 @@ def main():
             SPETokenizer,
         )
 
-        tokenizer = SPETokenizer.load(
-            os.path.join(args.processed_dir, "spe", "spe_vocab"),
-            os.path.join(args.processed_dir, "spe", "spe_merges"),
-        )
+        spe_stem = os.path.join(args.processed_dir, "spe", "spe")
+        tokenizer = SPETokenizer.load(spe_stem)
     else:
         tokenizer = AtomTokenizer.load(
             os.path.join(args.processed_dir, "atom", "atom_vocab.json")
@@ -210,10 +214,13 @@ def main():
     with open(os.path.join(args.output, "config.resolved.yaml"), "w") as f:
         yaml.dump(config, f, default_flow_style=False)
 
+    # Determine target dir for tokenized data
+    target_dir = "spe" if tokenizer_type == "spe" else "atom"
+
     # Load datasets
     print("Loading datasets...")
-    train_dataset = load_split_dataset(args.processed_dir, "train")
-    valid_dataset = load_split_dataset(args.processed_dir, "valid")
+    train_dataset = load_split_dataset(args.processed_dir, "train", target_dir=target_dir)
+    valid_dataset = load_split_dataset(args.processed_dir, "valid", target_dir=target_dir)
     print(f"  Train: {len(train_dataset)}, Valid: {len(valid_dataset)}")
 
     train_loader = DataLoader(
