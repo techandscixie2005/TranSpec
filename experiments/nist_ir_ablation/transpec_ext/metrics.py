@@ -1,6 +1,9 @@
-from typing import Dict, List, Optional, Tuple
+import logging
+from typing import Dict, List, Optional
 
 from rdkit import Chem
+
+logger = logging.getLogger(__name__)
 
 
 def canonicalize_smiles(smiles: str) -> Optional[str]:
@@ -17,9 +20,12 @@ def canonicalize_smiles(smiles: str) -> Optional[str]:
 def compute_top_k_accuracy(
     label_smiles: str,
     candidates: List[str],
-    top_k_values: List[int] = None,
+    top_k_values: Optional[List[int]] = None,
 ) -> Dict[str, bool]:
     """Compute Top-k hits for a single test example.
+
+    Preserves original candidate ranking — invalid candidates remain in
+    place and count as misses. Duplicates are not removed from ranking.
 
     Args:
         label_smiles: Ground truth SMILES string.
@@ -27,9 +33,7 @@ def compute_top_k_accuracy(
         top_k_values: List of k values, e.g. [1, 3, 5, 10].
 
     Returns:
-        Dict mapping "hit_top{k}" to bool. Invalid candidates remain in
-        ranking and count as misses. Duplicate canonical SMILES: first
-        occurrence counts, no reordering.
+        Dict mapping ``hit_top{k}`` to bool.
     """
     if top_k_values is None:
         top_k_values = [1, 3, 5, 10]
@@ -38,23 +42,17 @@ def compute_top_k_accuracy(
     if label_canon is None:
         return {f"hit_top{k}": False for k in top_k_values}
 
-    # Canonicalize each candidate, caching results
-    seen_canon = set()
-    # Build a list of (index, canonical) keeping only first occurrence
-    unique_candidates = []
+    # Canonicalize each candidate, preserving original order and position.
+    # Invalid (None) entries remain in the list so ranking is unchanged.
+    canonicalized: List[Optional[str]] = []
     for raw_smi in candidates:
-        if raw_smi == "":
-            continue
         can = canonicalize_smiles(raw_smi)
-        if can is None or can in seen_canon:
-            continue
-        seen_canon.add(can)
-        unique_candidates.append(can)
+        canonicalized.append(can)
 
     result = {}
     for k in top_k_values:
-        top_k_candidates = unique_candidates[:k]
-        result[f"hit_top{k}"] = label_canon in top_k_candidates
+        top_k = canonicalized[:k]
+        result[f"hit_top{k}"] = label_canon in top_k
 
     return result
 
@@ -62,7 +60,7 @@ def compute_top_k_accuracy(
 def compute_all_metrics(
     label_smiles_list: List[str],
     candidates_list: List[List[str]],
-    top_k_values: List[int] = None,
+    top_k_values: Optional[List[int]] = None,
 ) -> Dict[str, float]:
     """Compute aggregate Top-k accuracy across all test examples.
 
@@ -72,7 +70,7 @@ def compute_all_metrics(
         top_k_values: List of k values.
 
     Returns:
-        Dict mapping "top{k}" to accuracy (float 0-1).
+        Dict mapping ``top{k}`` to accuracy (float 0-1).
     """
     if top_k_values is None:
         top_k_values = [1, 3, 5, 10]
