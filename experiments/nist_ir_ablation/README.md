@@ -166,6 +166,65 @@ python experiments/nist_ir_ablation/scripts/make_report.py \
 
 ---
 
+## N16R4 GPU Partition (Beijing Super Cloud Computing Center Lingshui)
+
+Specific workflow for the N16R4 GPU partition:
+
+### Step 1: Checkout branch and prepare data
+
+```bash
+git checkout nist-ir-ablation-phase12
+```
+
+Place the input file at `data/nist_ir/raw/IR_nist.jsonl`. See [Input Format](#input-format) above for the expected JSONL schema.
+
+### Step 2: Preprocess data (run once, from login node)
+
+```bash
+python experiments/nist_ir_ablation/scripts/prepare_jsonl.py \
+  --input data/nist_ir/raw/IR_nist.jsonl \
+  --output runs/nist_ir_ablation \
+  --config experiments/nist_ir_ablation/configs/nist_ir_base.yaml
+```
+
+This writes processed data to `runs/nist_ir_ablation/processed/`.
+
+### Step 3: Submit Slurm array
+
+```bash
+sbatch experiments/nist_ir_ablation/run_full_12.slurm
+```
+
+The Slurm script (`run_full_12.slurm`) is pre-configured for N16R4:
+- `#SBATCH -p gpu`
+- `#SBATCH --gpus=1` (one GPU per array task)
+- `#SBATCH --array=0-11` (12 parallel tasks, one per model/seed)
+- Output logs: `slurm_logs/nist_ir_ablation/%A_%a.{out,err}`
+
+Before submitting, edit the environment setup in the script if needed:
+```bash
+# Uncomment and adjust for your cluster:
+# module load miniforge/24.11
+# source activate transpec
+```
+
+### Step 4: Aggregate and generate report
+
+After all array jobs complete:
+
+```bash
+python experiments/nist_ir_ablation/scripts/aggregate_results.py \
+  --run_dir runs/nist_ir_ablation/runs \
+  --summary_dir runs/nist_ir_ablation/summary
+
+python experiments/nist_ir_ablation/scripts/make_report.py \
+  --summary_dir runs/nist_ir_ablation/summary \
+  --output_md runs/nist_ir_ablation/summary/report.md \
+  --output_html runs/nist_ir_ablation/summary/report.html
+```
+
+---
+
 ## Run Aggregation Only
 
 If the 12 runs are already completed (checkpoints and eval/metrics.json exist), you can skip training and evaluation and run only aggregation:
