@@ -61,6 +61,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 
 # ---- Environment setup -------------------------------------------------------
+source /etc/profile.d/modules.sh
 module load miniforge3/24.11
 source activate transpec
 
