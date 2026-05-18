@@ -62,9 +62,9 @@ mkdir -p slurm_logs/nist_ir_ablation
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 
-# ---- Environment setup (edit for your cluster) ------------------------------
-# module load miniforge/24.11
-# source activate transpec
+# ---- Environment setup -------------------------------------------------------
+module load miniforge3/24.11
+source activate transpec
 
 # ---- Environment variables (override via export before sbatch) ------------
 INPUT_PATH="${INPUT_PATH:-data/nist_ir/raw/IR_nist.jsonl}"

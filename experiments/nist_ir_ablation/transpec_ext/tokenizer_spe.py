@@ -38,7 +38,7 @@ class SPETokenizer:
         min_frequency: int = 2,
         max_len: int = 256,
     ):
-        self.vocab_size = vocab_size
+        self._requested_vocab_size = vocab_size
         self.min_frequency = min_frequency
         self.max_len = max_len
         self.atom_tokenizer = AtomTokenizer(max_len=max_len)
@@ -57,6 +57,10 @@ class SPETokenizer:
     @property
     def vocab(self) -> Dict[str, int]:
         return dict(self._surface_to_id)
+
+    @property
+    def vocab_size(self) -> int:
+        return self.vocab_size_real
 
     @property
     def vocab_size_real(self) -> int:
@@ -110,7 +114,7 @@ class SPETokenizer:
             return self
 
         self._merges = []
-        num_merges = self.vocab_size
+        num_merges = self._requested_vocab_size
 
         # Use Counter for pair frequencies
         for _ in range(num_merges):
@@ -227,7 +231,7 @@ class SPETokenizer:
         vocab_path = f"{base_path}_vocab.json"
         vocab_data = {
             "max_len": self.max_len,
-            "vocab_size": self.vocab_size,
+            "vocab_size": self._requested_vocab_size,
             "min_frequency": self.min_frequency,
             "surface_to_id": self._surface_to_id,
             "atom_vocab": self.atom_tokenizer.vocab,
