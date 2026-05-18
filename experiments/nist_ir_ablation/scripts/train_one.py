@@ -71,7 +71,7 @@ def parse_args():
     parser.add_argument("--epochs", type=int, default=None, help="Override epochs")
     parser.add_argument(
         "--base_config", default=None,
-        help="Base YAML config path (default: smoke_200.yaml next to condition config)",
+        help="Base YAML config path (default: nist_ir_base.yaml, fallback smoke_200.yaml)",
     )
     return parser.parse_args()
 

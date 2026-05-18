@@ -33,7 +33,10 @@ from experiments.nist_ir_ablation.transpec_ext.metrics import (
     compute_all_metrics,
     compute_top_k_accuracy,
 )
-from experiments.nist_ir_ablation.transpec_ext.model_factory import build_model
+from experiments.nist_ir_ablation.transpec_ext.model_factory import (
+    build_model,
+    count_parameters,
+)
 from experiments.nist_ir_ablation.transpec_ext.tokenizer_atom import AtomTokenizer
 from experiments.nist_ir_ablation.transpec_ext.tokenizer_spe import SPETokenizer
 
@@ -105,7 +108,7 @@ def parse_args():
     )
     parser.add_argument(
         "--base_config", default=None,
-        help="Base YAML config path (default: smoke_200.yaml next to condition config)",
+        help="Base YAML config path (default: nist_ir_base.yaml, fallback smoke_200.yaml)",
     )
     return parser.parse_args()
 
@@ -115,11 +118,17 @@ def load_configs(args):
     base_path = args.base_config
     if base_path is None:
         config_dir = os.path.dirname(os.path.abspath(args.config))
-        base_path = os.path.join(config_dir, "smoke_200.yaml")
-    if not os.path.exists(base_path):
-        print(f"WARNING: Base config not found at {base_path}, using condition config only")
-        with open(args.config) as f:
-            return yaml.safe_load(f)
+        base_candidates = ["nist_ir_base.yaml", "smoke_200.yaml"]
+        for candidate in base_candidates:
+            candidate_path = os.path.join(config_dir, candidate)
+            if os.path.exists(candidate_path):
+                base_path = candidate_path
+                print(f"WARNING: --base_config not provided, using {candidate}")
+                break
+        if base_path is None:
+            print("ERROR: --base_config not found and no suitable config in directory")
+            with open(args.config) as f:
+                return yaml.safe_load(f)
 
     with open(base_path) as f:
         config = yaml.safe_load(f)
@@ -399,6 +408,11 @@ def main():
         model.load_state_dict(checkpoint)
     logger.info("Checkpoint loaded")
 
+    # Extract training metadata from checkpoint
+    best_epoch = checkpoint.get("epoch", 0) if "model_state_dict" in checkpoint else 0
+    best_valid_loss = checkpoint.get("valid_loss", 0.0) if "model_state_dict" in checkpoint else 0.0
+    param_counts = count_parameters(model)
+
     # Decode
     logger.info("Decoding test set ...")
     t0 = time.time()
@@ -435,6 +449,10 @@ def main():
         "beam_size": decoding_cfg.get("beam_size", 10),
         "candidate_limit": decoding_cfg.get("candidate_limit", 10),
         "max_decode_len": decoding_cfg.get("max_len", 256),
+        "total_params": param_counts["total_params"],
+        "trainable_params": param_counts["trainable_params"],
+        "best_epoch": best_epoch,
+        "best_valid_loss": best_valid_loss,
         "checkpoint_path": args.checkpoint,
         "processed_dir": args.processed_dir,
         "eval_time_sec": eval_time,
