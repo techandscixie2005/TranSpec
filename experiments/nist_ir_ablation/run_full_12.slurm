@@ -69,7 +69,15 @@ source activate transpec
 # PyTorch bundles its own CUDA 11.8 libs (libnvrtc, libcudart, etc.) inside
 # the torch package directory — add them to LD_LIBRARY_PATH so cuDNN can
 # find them on compute nodes where the system CUDA (12.4) differs.
-export LD_LIBRARY_PATH="${CONDA_PREFIX}/lib/python3.9/site-packages/torch/lib:${LD_LIBRARY_PATH}"
+TORCH_LIB_DIR="${CONDA_PREFIX}/lib/python3.9/site-packages/torch/lib"
+export LD_LIBRARY_PATH="${TORCH_LIB_DIR}:${LD_LIBRARY_PATH}"
+
+# cuDNN specifically loads libnvrtc.so (unversioned) via dlopen, but torch
+# only ships versioned names. Create the symlink if it does not exist.
+NVRTC_SO="$(ls "${TORCH_LIB_DIR}"/libnvrtc-*.so.* 2>/dev/null | head -1)"
+if [ -n "$NVRTC_SO" ] && [ ! -f "${TORCH_LIB_DIR}/libnvrtc.so" ]; then
+    ln -sf "$(basename "$NVRTC_SO")" "${TORCH_LIB_DIR}/libnvrtc.so"
+fi
 
 # ---- Environment variables (override via export before sbatch) ------------
 INPUT_PATH="${INPUT_PATH:-data/nist_ir/raw/IR_nist.jsonl}"
