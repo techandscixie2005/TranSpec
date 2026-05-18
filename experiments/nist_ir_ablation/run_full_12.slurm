@@ -57,8 +57,9 @@ set -euo pipefail
 mkdir -p slurm_logs/nist_ir_ablation
 
 # ---- Resolve repo root ----------------------------------------------------
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
+# Under Slurm, BASH_SOURCE[0] points to the spool copy (/var/spool/...),
+# so SLURM_SUBMIT_DIR (the directory sbatch was run from) is authoritative.
+REPO_ROOT="${SLURM_SUBMIT_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)}"
 
 # ---- Environment setup -------------------------------------------------------
 source /etc/profile.d/modules.sh
