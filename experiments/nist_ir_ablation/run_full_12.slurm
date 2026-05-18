@@ -48,8 +48,6 @@
 #SBATCH --error=slurm_logs/nist_ir_ablation/%A_%a.err
 ## ---- Resource requests (edit as needed) ----------------------------------
 #SBATCH --gpus=1
-#SBATCH --cpus-per-task=8
-#SBATCH --mem=32G
 #SBATCH --time=24:00:00
 ## --------------------------------------------------------------------------
 
