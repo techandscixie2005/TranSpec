@@ -66,6 +66,11 @@ source /etc/profile.d/modules.sh
 module load miniforge3/24.11
 source activate transpec
 
+# PyTorch bundles its own CUDA 11.8 libs (libnvrtc, libcudart, etc.) inside
+# the torch package directory — add them to LD_LIBRARY_PATH so cuDNN can
+# find them on compute nodes where the system CUDA (12.4) differs.
+export LD_LIBRARY_PATH="${CONDA_PREFIX}/lib/python3.9/site-packages/torch/lib:${LD_LIBRARY_PATH}"
+
 # ---- Environment variables (override via export before sbatch) ------------
 INPUT_PATH="${INPUT_PATH:-data/nist_ir/raw/IR_nist.jsonl}"
 OUTPUT_DIR="${OUTPUT_DIR:-runs/nist_ir_ablation}"
